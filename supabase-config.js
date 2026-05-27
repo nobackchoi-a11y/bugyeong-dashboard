@@ -4,5 +4,5 @@
 // anon public key: Supabase > Project Settings > API 에서 확인
 window.BUGYEONG_SUPABASE = {
   url: "https://mtuorootqzjumpplrmfu.supabase.co",
-  anonKey: "여기에 Publishable key 붙여넣기"
+  anonKey: "sb_publishable_mxmYOdHbby_nLdsvMoRYag_qQsvH8PW"
 };
