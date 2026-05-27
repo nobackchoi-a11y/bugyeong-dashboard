@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="stylesheet" href="../assets/style.css"><title>가동관리 (지점 / 매니저 실적) - 조회형</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../supabase-config.js"></script>
+<style>
+.home{position:fixed;right:16px;top:16px;z-index:10;background:#0f4c81;color:white;text-decoration:none;border-radius:999px;padding:10px 14px;font-weight:900;box-shadow:0 10px 25px rgba(15,76,129,.25)}
+.filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:white;border:1px solid #e5eaf2;border-radius:20px;padding:16px}.kpi .label{font-size:12px;color:#64748b;font-weight:900}.kpi .num{font-size:22px;color:#0f4c81;font-weight:950;margin-top:6px;word-break:break-all}
+.status{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px;margin:0}
+@media(max-width:760px){.filters,.kpis{grid-template-columns:1fr}.home{right:10px;top:10px}}
+</style>
+</head><body>
+<a class="home" href="../index.html">🏠 홈으로</a>
+<header class="header"><div class="brand"><div class="logo">B</div><div><h1>가동관리 (지점 / 매니저 실적) - 조회형</h1><div class="sub">Supabase 최신 업로드 데이터 조회형</div></div></div></header>
+<main class="wrap">
+<section class="card">
+  <div class="filters">
+    <div><label>지점/조직</label><select id="branch"><option value="">전체</option></select></div>
+    <div><label>매니저/영업</label><select id="manager"><option value="">전체</option></select></div>
+    <div><label>검색</label><input id="search" placeholder="FC명 / 대리점명 / 코드 검색"></div>
+    <div><label>정렬</label><select id="sort"><option value="">기본</option><option value="amount_desc">금액 높은순</option><option value="amount_asc">금액 낮은순</option></select></div>
+  </div>
+  <button class="btn" onclick="loadData()">최신 데이터 새로고침</button>
+  <button class="btn secondary" onclick="resetFilters()">필터 초기화</button>
+</section>
+<section class="kpis">
+  <div class="kpi"><div class="label">파일명</div><div class="num" id="kFile" style="font-size:14px">-</div></div>
+  <div class="kpi"><div class="label">업로드 행수</div><div class="num" id="kRows">0</div></div>
+  <div class="kpi"><div class="label">조회 행수</div><div class="num" id="kFiltered">0</div></div>
+  <div class="kpi"><div class="label">합계</div><div class="num" id="kAmount">0</div></div>
+</section>
+<section class="card"><h2>상태</h2><pre class="status" id="status">대기 중</pre></section>
+<section class="card"><h2>데이터 목록 <small style="color:#64748b">최대 300행 표시</small></h2><div class="tablewrap"><table class="table" id="tbl"></table></div></section>
+</main>
+<script>
+const DATASET_KEY = "branch_manager";
+const FIELD_HINT = {"branch": ["지점", "조직", "본부", "사업단"], "manager": ["매니저", "영업", "담당자"], "amount": ["당월가동실적", "당월가동금액", "가동금액", "26.05"], "columns": ["조직", "지점", "매니저", "영업", "대리점명", "모대리점", "FC명", "FC코드", "당월가동실적", "누계실적", "26.05", "26.04", "25.12"]};
+let rawRows=[], meta=null;
+const cfg=window.BUGYEONG_SUPABASE||{};
+const client=(!cfg.url || cfg.url.includes("YOUR") || cfg.anonKey.includes("여기에")) ? null : window.supabase.createClient(cfg.url,cfg.anonKey);
+const statusEl=document.getElementById("status");
+function pick(row,names){for(const n of names){if(row[n]!==undefined&&row[n]!==null&&String(row[n]).trim()!=="")return row[n];}return "";}
+function num(v){if(v===null||v===undefined||v==="")return 0;const n=Number(String(v).replace(/,/g,""));return isNaN(n)?0:n;}
+function fmt(n){return Number(n||0).toLocaleString("ko-KR");}
+async function loadData(){
+ try{
+  if(!client) throw new Error("supabase-config.js에 Publishable Key를 입력해야 합니다.");
+  statusEl.textContent="Supabase 최신 데이터 조회 중...";
+  const {data,error}=await client.from("dashboard_datasets").select("*").eq("dataset_key",DATASET_KEY).order("uploaded_at",{ascending:false}).limit(1);
+  if(error) throw error;
+  if(!data||!data.length){rawRows=[];meta=null;render();statusEl.textContent="업로드 자료가 없습니다: "+DATASET_KEY;return;}
+  meta=data[0];rawRows=Array.isArray(meta.data)?meta.data:[];
+  statusEl.textContent=`최신 데이터 로드 완료\n파일명: ${meta.file_name}\n업로드: ${meta.uploaded_at}\n행 수: ${meta.row_count}`;
+  fillFilters();render();
+ }catch(err){statusEl.textContent="오류: "+(err.message||JSON.stringify(err));}
+}
+function fillFilters(){
+ const branches=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.branch))).filter(Boolean))].sort();
+ const managers=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.manager))).filter(Boolean))].sort();
+ document.getElementById("branch").innerHTML='<option value="">전체</option>'+branches.map(v=>`<option>${v}</option>`).join("");
+ document.getElementById("manager").innerHTML='<option value="">전체</option>'+managers.map(v=>`<option>${v}</option>`).join("");
+}
+function getFiltered(){
+ const b=document.getElementById("branch").value,m=document.getElementById("manager").value,q=document.getElementById("search").value.trim().toLowerCase(),s=document.getElementById("sort").value;
+ let rows=rawRows.filter(r=>{const rb=String(pick(r,FIELD_HINT.branch)),rm=String(pick(r,FIELD_HINT.manager)),txt=JSON.stringify(r).toLowerCase();return(!b||rb===b)&&(!m||rm===m)&&(!q||txt.includes(q));});
+ if(s){rows.sort((a,b)=>{const av=num(pick(a,FIELD_HINT.amount)),bv=num(pick(b,FIELD_HINT.amount));return s==="amount_desc"?bv-av:av-bv;});}
+ return rows;
+}
+function render(){
+ const rows=getFiltered();
+ document.getElementById("kFile").textContent=meta?meta.file_name:"-";
+ document.getElementById("kRows").textContent=fmt(meta?meta.row_count:rawRows.length);
+ document.getElementById("kFiltered").textContent=fmt(rows.length);
+ document.getElementById("kAmount").textContent=fmt(rows.reduce((sum,r)=>sum+num(pick(r,FIELD_HINT.amount)),0));
+ renderTable(rows.slice(0,300));
+}
+function renderTable(rows){
+ const tbl=document.getElementById("tbl"); if(!rows.length){tbl.innerHTML="";return;}
+ const all=Object.keys(rows[0]); const priority=FIELD_HINT.columns; const headers=[...priority.filter(h=>all.includes(h)),...all.filter(h=>!priority.includes(h)).slice(0,20)];
+ tbl.innerHTML="<thead><tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+headers.map(h=>`<td>${r[h]??""}</td>`).join("")+"</tr>").join("")+"</tbody>";
+}
+function resetFilters(){document.getElementById("branch").value="";document.getElementById("manager").value="";document.getElementById("search").value="";document.getElementById("sort").value="";render();}
+["branch","manager","search","sort"].forEach(id=>document.getElementById(id).addEventListener("input",render));
+loadData();
+</script></body></html>

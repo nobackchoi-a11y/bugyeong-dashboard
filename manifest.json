@@ -1,10 +1,9 @@
 {
-  "name": "부경사업단 업무앱 V3",
+  "name": "부경사업단 업무앱 V2.1",
   "short_name": "부경업무앱",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "theme_color": "#0f4c81",
-  "background_color": "#f4f7fb",
-  "description": "Supabase + Netlify 기반 부경사업단 업무앱"
+  "background_color": "#f4f7fb"
 }

@@ -1,24 +1,5 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f4c81"><link rel="manifest" href="./manifest.json"><link rel="stylesheet" href="./assets/style.css">
-<title>부경사업단 업무앱 V3</title>
-</head>
-<body>
-<header class="header"><div class="brand"><div class="logo">B</div><div><h1>부경사업단 업무앱 V3</h1><div class="sub">Supabase + Netlify 온라인 데이터 연동 준비버전</div></div></div></header>
-<main class="wrap">
-  <div class="notice">V3는 관리자 업로드 화면과 Supabase 데이터 저장 구조가 포함되어 있습니다.</div>
-  <div class="grid">
-    <section class="card"><div style="font-size:36px">📈</div><h2>가동관리<br><small>(FC 이미지전송)</small></h2><p>FC별 가동관리 카드와 이미지 저장/전송용 화면입니다.</p><a class="btn" href="./dashboards/fc-image.html">실행</a></section>
-    <section class="card"><div style="font-size:36px">📊</div><h2>가동관리<br><small>(지점 / 매니저 실적)</small></h2><p>지점·매니저별 실적, 가동금액, 추이 대시보드입니다.</p><a class="btn" href="./dashboards/branch-manager.html">실행</a></section>
-    <section class="card"><div style="font-size:36px">🏢</div><h2>대리점관리</h2><p>대리점별 실적, 순위, 현황 대시보드입니다.</p><a class="btn" href="./dashboards/agency.html">실행</a></section>
-  </div>
-  <div class="grid" style="margin-top:16px">
-    <section class="card"><div style="font-size:36px">🔐</div><h2>관리자 업로드</h2><p>엑셀 파일을 업로드해 Supabase에 저장합니다.</p><a class="btn" href="./admin.html">관리자 화면</a></section>
-    <section class="card"><div style="font-size:36px">🗄️</div><h2>업로드 데이터 확인</h2><p>Supabase에 저장된 최신 데이터를 확인합니다.</p><a class="btn secondary" href="./data-viewer.html">데이터 보기</a></section>
-    <section class="card"><div style="font-size:36px">⚙️</div><h2>설정 안내</h2><p>Supabase URL/Key 입력과 DB 생성 SQL 안내입니다.</p><a class="btn secondary" href="./setup.html">설정 보기</a></section>
-  </div>
-</main>
-<div class="footer">Pinchecker · Bugyeong Business App V3</div>
-</body></html>
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="stylesheet" href="./assets/style.css"><title>부경사업단 업무앱 V2.1</title></head><body><header class="header"><div class="brand"><div class="logo">B</div><div><h1>부경사업단 업무앱 V2.1</h1><div class="sub">Supabase 최신 데이터 조회형 테스트</div></div></div></header><main class="wrap"><div class="notice">Supabase 최신 데이터 조회형 화면이 추가되었습니다.</div><section class="card"><h2>🟢 Supabase 조회형 화면</h2><p>아침에 엑셀을 업로드하면 아래 화면에서 최신 데이터가 바로 조회됩니다.</p></section><div class="grid"><section class="card"><div style="font-size:36px">📈</div><h2>가동관리<br><small>(FC 이미지전송)</small></h2><p>Supabase 최신 가동관리 데이터를 조회합니다.</p><a class="btn" href="./dashboards/live-fc-image.html">조회형 실행</a></section><section class="card"><div style="font-size:36px">📊</div><h2>가동관리<br><small>(지점 / 매니저 실적)</small></h2><p>Supabase 최신 지점·매니저 데이터를 조회합니다.</p><a class="btn" href="./dashboards/live-branch-manager.html">조회형 실행</a></section><section class="card"><div style="font-size:36px">🏢</div><h2>대리점관리</h2><p>Supabase 최신 대리점관리 데이터를 조회합니다.</p><a class="btn" href="./dashboards/live-agency.html">조회형 실행</a></section></div><section class="card"><h2>🔐 관리자 업로드 <small style='color:#0f4c81'>(비밀번호)</small></h2><p>엑셀 파일을 Supabase에 저장합니다.</p><a class="btn" href="./admin.html">관리자 화면</a></section><section class="card"><h2>🔵 기존 최종본 화면</h2><p>기존 고정 HTML도 유지됩니다.</p></section><div class="grid"><section class="card"><h2>FC 이미지전송 기존화면</h2><a class="btn secondary" href="./dashboards/fc-image.html">기존 화면</a></section><section class="card"><h2>지점/매니저 기존화면</h2><a class="btn secondary" href="./dashboards/branch-manager.html">기존 화면</a></section><section class="card"><h2>대리점관리 기존화면</h2><a class="btn secondary" href="./dashboards/agency.html">기존 화면</a></section></div><div class="grid" style="margin-top:16px">
+<section class="card"><h2>🗄️ 업로드 데이터 확인<br><small>(비밀번호)</small></h2><p>Supabase에 저장된 최신 데이터를 확인합니다.</p><a class="btn secondary" href="./data-viewer.html">열기</a></section>
+<section class="card"><h2>⚙️ 설정 안내<br><small>(비밀번호)</small></h2><p>Supabase 설정과 연결값을 확인합니다.</p><a class="btn secondary" href="./setup.html">열기</a></section>
+</div>
+</main><div class="footer">Pinchecker · Bugyeong Business App V2.1</div></body></html>
