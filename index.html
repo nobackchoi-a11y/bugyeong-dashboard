@@ -1,57 +1,24 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f4c81">
-<link rel="manifest" href="./manifest.json">
-<title>부경사업단 업무앱</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Arial,sans-serif;background:#f4f7fb;color:#111827}
-.header{background:linear-gradient(135deg,#0f4c81,#07335a);color:white;padding:24px 18px 30px;border-bottom-left-radius:30px;border-bottom-right-radius:30px}
-.brand{display:flex;align-items:center;gap:14px;max-width:980px;margin:0 auto}
-.logo{width:56px;height:56px;border-radius:18px;background:white;color:#0f4c81;display:grid;place-items:center;font-weight:950;font-size:30px}
-h1{margin:0;font-size:25px;letter-spacing:-.8px}
-.sub{margin-top:5px;font-size:14px;opacity:.9}
-.wrap{max-width:980px;margin:0 auto;padding:18px}
-.notice{background:#eef5fb;color:#0f4c81;border-radius:20px;padding:16px 18px;margin-bottom:16px;font-weight:850}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.card{background:white;border:1px solid #e5eaf2;border-radius:24px;padding:22px;box-shadow:0 10px 28px rgba(15,76,129,.08);min-height:220px;display:flex;flex-direction:column;justify-content:space-between}
-.icon{font-size:36px}.card h2{font-size:21px;margin:10px 0 8px}.card h2 small{font-size:15px;color:#0f4c81}.card p{font-size:14px;color:#64748b;line-height:1.55;margin:0}
-.btn{display:inline-block;margin-top:16px;text-decoration:none;background:#0f4c81;color:white;border-radius:15px;padding:13px 18px;font-weight:900}
-.footer{text-align:center;padding:18px;color:#64748b;font-size:13px}
-@media(max-width:760px){.grid{grid-template-columns:1fr}.wrap{padding:14px}.card{min-height:160px}}
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f4c81"><link rel="manifest" href="./manifest.json"><link rel="stylesheet" href="./assets/style.css">
+<title>부경사업단 업무앱 V3</title>
 </head>
 <body>
-<header class="header">
-  <div class="brand">
-    <div class="logo">B</div>
-    <div>
-      <h1>부경사업단 업무앱</h1>
-      <div class="sub">가동관리 · 지점/매니저 실적 · 대리점관리</div>
-    </div>
-  </div>
-</header>
+<header class="header"><div class="brand"><div class="logo">B</div><div><h1>부경사업단 업무앱 V3</h1><div class="sub">Supabase + Netlify 온라인 데이터 연동 준비버전</div></div></div></header>
 <main class="wrap">
-  <div class="notice">GitHub + Netlify 자동배포용 정상 구조 버전입니다.</div>
+  <div class="notice">V3는 관리자 업로드 화면과 Supabase 데이터 저장 구조가 포함되어 있습니다.</div>
   <div class="grid">
-
-    <section class="card">
-      <div><div class="icon">📈</div><h2>가동관리<br><small>(FC 이미지전송)</small></h2><p>FC별 가동관리 카드와 이미지 저장/전송용 화면을 실행합니다.</p></div>
-      <a class="btn" href="./dashboards/activity.html">실행</a>
-    </section>
-    <section class="card">
-      <div><div class="icon">📊</div><h2>가동관리<br><small>(지점 / 매니저 실적)</small></h2><p>지점·매니저별 실적, 가동금액, 추이 대시보드를 실행합니다.</p></div>
-      <a class="btn" href="./dashboards/manager-image.html">실행</a>
-    </section>
-    <section class="card">
-      <div><div class="icon">🏢</div><h2>대리점관리</h2><p>대리점별 실적, 순위, 현황 대시보드를 실행합니다.</p></div>
-      <a class="btn" href="./dashboards/agency.html">실행</a>
-    </section>
+    <section class="card"><div style="font-size:36px">📈</div><h2>가동관리<br><small>(FC 이미지전송)</small></h2><p>FC별 가동관리 카드와 이미지 저장/전송용 화면입니다.</p><a class="btn" href="./dashboards/fc-image.html">실행</a></section>
+    <section class="card"><div style="font-size:36px">📊</div><h2>가동관리<br><small>(지점 / 매니저 실적)</small></h2><p>지점·매니저별 실적, 가동금액, 추이 대시보드입니다.</p><a class="btn" href="./dashboards/branch-manager.html">실행</a></section>
+    <section class="card"><div style="font-size:36px">🏢</div><h2>대리점관리</h2><p>대리점별 실적, 순위, 현황 대시보드입니다.</p><a class="btn" href="./dashboards/agency.html">실행</a></section>
+  </div>
+  <div class="grid" style="margin-top:16px">
+    <section class="card"><div style="font-size:36px">🔐</div><h2>관리자 업로드</h2><p>엑셀 파일을 업로드해 Supabase에 저장합니다.</p><a class="btn" href="./admin.html">관리자 화면</a></section>
+    <section class="card"><div style="font-size:36px">🗄️</div><h2>업로드 데이터 확인</h2><p>Supabase에 저장된 최신 데이터를 확인합니다.</p><a class="btn secondary" href="./data-viewer.html">데이터 보기</a></section>
+    <section class="card"><div style="font-size:36px">⚙️</div><h2>설정 안내</h2><p>Supabase URL/Key 입력과 DB 생성 SQL 안내입니다.</p><a class="btn secondary" href="./setup.html">설정 보기</a></section>
   </div>
 </main>
-<div class="footer">Pinchecker · Bugyeong Business App</div>
-</body>
-</html>
+<div class="footer">Pinchecker · Bugyeong Business App V3</div>
+</body></html>
