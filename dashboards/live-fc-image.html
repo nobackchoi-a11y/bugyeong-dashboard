@@ -1,98 +1,190 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link rel="stylesheet" href="../assets/style.css"><title>가동관리 (FC 이미지전송) - 조회형</title>
+<title>가동관리 (FC 이미지전송) - 조회형</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../supabase-config.js"></script>
 <style>
-.home{position:fixed;right:16px;top:16px;z-index:10;background:#0f4c81;color:white;text-decoration:none;border-radius:999px;padding:10px 14px;font-weight:900;box-shadow:0 10px 25px rgba(15,76,129,.25)}
-.filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
-.kpi{background:white;border:1px solid #e5eaf2;border-radius:20px;padding:16px}.kpi .label{font-size:12px;color:#64748b;font-weight:900}.kpi .num{font-size:22px;color:#0f4c81;font-weight:950;margin-top:6px;word-break:break-all}
-.status{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px;margin:0}
-@media(max-width:760px){.filters,.kpis{grid-template-columns:1fr}.home{right:10px;top:10px}}
-</style>
-</head><body>
+:root{--bg:#eef3f8;--card:#fff;--ink:#06142b;--muted:#697386;--line:#e5eaf0;--blue:#244b86;--green:#10b981}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 0% 0%,rgba(37,99,235,.12),transparent 330px),var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",Arial,sans-serif}
+.wrap{max-width:1480px;margin:0 auto;padding:22px 14px 72px}
+.hero{background:linear-gradient(135deg,#06142b 0%,#244b86 50%,#10b981 100%);color:white;border-radius:30px;padding:28px 26px;margin-bottom:20px;box-shadow:0 18px 46px rgba(15,47,95,.24);position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-80px;top:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.14)}
+.hero h1{margin:0;font-size:32px;letter-spacing:-.8px}.hero p{margin:9px 0 0;font-size:14px;opacity:.92}
+.home{position:fixed;right:16px;top:16px;z-index:100;background:#244b86;color:white;text-decoration:none;border-radius:999px;padding:10px 14px;font-weight:900;box-shadow:0 10px 25px rgba(15,76,129,.25)}
+.filters{position:sticky;top:0;z-index:50;background:rgba(238,243,248,.94);backdrop-filter:blur(12px);border:1px solid rgba(229,234,240,.9);border-radius:24px;padding:14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr 1.25fr 1fr 1fr 1.1fr .72fr;gap:10px;box-shadow:0 12px 32px rgba(15,47,95,.08)}
+select,input,button{width:100%;border:1px solid var(--line);border-radius:15px;background:white;padding:12px;font-size:14px;outline:none}
+button{background:#244b86;color:#fff;border:none;font-weight:900;cursor:pointer}
+.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.kpi{background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.75);border-radius:20px;padding:14px;box-shadow:0 10px 25px rgba(15,47,95,.07)}
+.kpi .label{font-size:12px;color:var(--muted);font-weight:800}.kpi .num{font-size:25px;font-weight:950;margin-top:5px;color:#244b86;word-break:break-all}
+.panelBox{background:#fff;border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:0 12px 28px rgba(15,47,95,.07);margin-bottom:16px}
+.panelBox h2{font-size:18px;margin:0 0 12px}
+.rankGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rankList{display:grid;gap:8px;max-height:290px;overflow:auto}
+.rankItem{display:grid;grid-template-columns:1.2fr .8fr .65fr;gap:8px;align-items:center;background:#f8fbff;border:1px solid #edf1f5;border-radius:14px;padding:9px 11px;font-size:13px}
+.rankItem b{font-size:14px}.rankItem span{color:var(--muted)}.rankItem strong{text-align:right;color:#244b86}
+.tablewrap{overflow:auto;border:1px solid #e7edf3;border-radius:18px;background:#fff;max-height:680px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:1200px}th{position:sticky;top:0;background:#eef6ff;color:#23415f;font-weight:950;padding:10px;border-bottom:1px solid #d8e3ef;z-index:1}td{padding:9px;border-bottom:1px solid #e6edf5;text-align:center;white-space:nowrap}tr:hover td{background:#f8fbff}
+.status{white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px;margin:0;font-size:13px}
+.badge{display:inline-block;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:900;background:#eef5fb;color:#244b86}
+@media(max-width:1150px){.filters{grid-template-columns:repeat(3,1fr)}.summary{grid-template-columns:repeat(3,1fr)}.rankGrid{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap{padding:14px 10px 60px}.hero h1{font-size:24px}.filters,.summary{grid-template-columns:1fr}.home{right:10px;top:10px}}
+</style></head>
+<body>
 <a class="home" href="../index.html">🏠 홈으로</a>
-<header class="header"><div class="brand"><div class="logo">B</div><div><h1>가동관리 (FC 이미지전송) - 조회형</h1><div class="sub">Supabase 최신 업로드 데이터 조회형</div></div></div></header>
-<main class="wrap">
-<section class="card">
-  <div class="filters">
-    <div><label>지점/조직</label><select id="branch"><option value="">전체</option></select></div>
-    <div><label>매니저/영업</label><select id="manager"><option value="">전체</option></select></div>
-    <div><label>검색</label><input id="search" placeholder="FC명 / 대리점명 / 코드 검색"></div>
-    <div><label>정렬</label><select id="sort"><option value="">기본</option><option value="amount_desc">금액 높은순</option><option value="amount_asc">금액 낮은순</option></select></div>
+<div class="wrap">
+  <div class="hero">
+    <h1>FC 가동관리 통합 대시보드</h1>
+    <p>Supabase 최신 업로드 데이터 조회형 · 필터/요약 자동 계산</p>
   </div>
-  <button class="btn" onclick="loadData()">최신 데이터 새로고침</button>
-  <button class="btn secondary" onclick="resetFilters()">필터 초기화</button>
-</section>
-<section class="kpis">
-  <div class="kpi"><div class="label">파일명</div><div class="num" id="kFile" style="font-size:14px">-</div></div>
-  <div class="kpi"><div class="label">업로드 행수</div><div class="num" id="kRows">0</div></div>
-  <div class="kpi"><div class="label">조회 행수</div><div class="num" id="kFiltered">0</div></div>
-  <div class="kpi"><div class="label">합계</div><div class="num" id="kAmount">0</div></div>
-</section>
-<section class="card"><h2>상태</h2><pre class="status" id="status">대기 중</pre></section>
-<section class="card"><h2>데이터 목록 <small style="color:#64748b">최대 300행 표시</small></h2><div class="tablewrap"><table class="table" id="tbl"></table></div></section>
-</main>
+
+  <div class="filters">
+    <select id="branch"><option value="">전체 지점</option></select>
+    <select id="manager"><option value="">전체 매니저</option></select>
+    <select id="agency"><option value="">전체 대리점명</option></select>
+    <select id="activity"><option value="">전체 활동대상</option></select>
+    <select id="runSegment"><option value="">당월가동구간</option></select>
+    <input id="search" placeholder="FC명 / FC코드 검색">
+    <button onclick="resetFilters()">초기화</button>
+  </div>
+
+  <div class="summary">
+    <div class="kpi"><div class="label">조회 인원</div><div class="num" id="kTotal">0</div></div>
+    <div class="kpi"><div class="label">첫가동</div><div class="num" id="kFirst">0</div></div>
+    <div class="kpi"><div class="label">그린플래티넘</div><div class="num" id="kGreen">0</div></div>
+    <div class="kpi"><div class="label">플래티넘</div><div class="num" id="kPlat">0</div></div>
+    <div class="kpi"><div class="label">20만가동</div><div class="num" id="k20">0</div></div>
+    <div class="kpi"><div class="label">브릿지</div><div class="num" id="kBridge">0</div></div>
+  </div>
+
+  <section class="rankGrid">
+    <div class="panelBox"><h2>지점별 현황</h2><div id="branchRank" class="rankList"></div></div>
+    <div class="panelBox"><h2>매니저별 현황</h2><div id="managerRank" class="rankList"></div></div>
+  </section>
+
+  <section class="panelBox">
+    <h2>상태</h2>
+    <pre class="status" id="status">대기 중</pre>
+  </section>
+
+  <section class="panelBox">
+    <h2>FC 데이터 목록 <span class="badge" id="rowInfo">0명</span></h2>
+    <div class="tablewrap"><table id="tbl"></table></div>
+  </section>
+</div>
+
 <script>
-const DATASET_KEY = "fc_activity";
-const FIELD_HINT = {"branch": ["지점", "조직", "본부", "사업단"], "manager": ["매니저", "영업", "담당자"], "amount": ["당월가동실적", "당월가동금액", "가동금액", "26.05"], "columns": ["조직", "지점", "매니저", "영업", "대리점명", "모대리점", "FC명", "FC코드", "활동대상", "당월가동실적", "26.05", "브릿지구간", "브릿지달성여부"]};
+const DATASET_KEY="fc_activity";
 let rawRows=[], meta=null;
+
 const cfg=window.BUGYEONG_SUPABASE||{};
-const client=(!cfg.url || cfg.url.includes("YOUR") || cfg.anonKey.includes("여기에")) ? null : window.supabase.createClient(cfg.url,cfg.anonKey);
+const client=(!cfg.url || !cfg.anonKey || cfg.anonKey.includes("여기에") || cfg.anonKey.includes("YOUR")) ? null : window.supabase.createClient(cfg.url,cfg.anonKey);
 const statusEl=document.getElementById("status");
-function pick(row,names){for(const n of names){if(row[n]!==undefined&&row[n]!==null&&String(row[n]).trim()!=="")return row[n];}return "";}
-function num(v){if(v===null||v===undefined||v==="")return 0;const n=Number(String(v).replace(/,/g,""));return isNaN(n)?0:n;}
+
+const FIELD={
+ branch:["지점","조직","본부","사업단"],
+ manager:["매니저","영업","담당자","담당매니저"],
+ agency:["대리점명","모대리점","대리점"],
+ fc:["FC명","FC","성명","이름"],
+ code:["FC코드","FC CODE","사용인번호","코드"],
+ activity:["활동대상","활동구분","대상"],
+ amount:["당월가동실적","당월가동금액","가동실적","가동금액","실적","26.05","시상26.05"]
+};
+
+function norm(v){return String(v??"").replace(/\\u00a0/g," ").trim();}
+function pick(r, names){for(const n of names){if(r[n]!==undefined && norm(r[n])!=="") return r[n];} return "";}
+function num(v){const n=Number(norm(v).replace(/,/g,"")); return isNaN(n)?0:n;}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR");}
-function validFilterValue(v){
-  const s=String(v??"").trim();
-  if(!s) return false;
-  if(/^[-+]?\d+(\.\d+)?$/.test(s)) return false;
-  if(/^\d{1,2}월$/.test(s)) return false;
-  if(/^\d{2}\.\d{1,2}$/.test(s)) return false;
-  if(s.length>30) return false;
-  const block=["가동실적","누계실적","브릿지대상","비대상","FC님","드림빅대상","부족분"];
-  if(block.includes(s)) return false;
-  return true;
+function valid(v){const s=norm(v); if(!s) return false; if(/^[-+]?\\d+(\\.\\d+)?$/.test(s)) return false; if(/^\\d{1,2}월$/.test(s)) return false; if(/^\\d{2}\\.\\d{1,2}$/.test(s)) return false; if(s.length>35) return false; return true;}
+function getAmount(r){return num(pick(r,FIELD.amount));}
+function segLabel(amt){
+ if(amt<=0) return "미가동";
+ if(amt<47500) return "5만미만";
+ if(amt<95000) return "5만가동";
+ if(amt<190000) return "10만가동";
+ if(amt<300000) return "20만가동";
+ if(amt<500000) return "30만가동";
+ return "50만가동";
 }
+function splitActs(v){return norm(v).split(/[;,/|]+/).map(x=>x.trim()).filter(Boolean);}
+
 async function loadData(){
  try{
-  if(!client) throw new Error("supabase-config.js에 Publishable Key를 입력해야 합니다.");
+  if(!client) throw new Error("supabase-config.js 설정이 필요합니다.");
   statusEl.textContent="Supabase 최신 데이터 조회 중...";
   const {data,error}=await client.from("dashboard_datasets").select("*").eq("dataset_key",DATASET_KEY).order("uploaded_at",{ascending:false}).limit(1);
   if(error) throw error;
-  if(!data||!data.length){rawRows=[];meta=null;render();statusEl.textContent="업로드 자료가 없습니다: "+DATASET_KEY;return;}
-  meta=data[0];rawRows=Array.isArray(meta.data)?meta.data:[];
-  statusEl.textContent=`최신 데이터 로드 완료\n파일명: ${meta.file_name}\n업로드: ${meta.uploaded_at}\n행 수: ${meta.row_count}`;
-  fillFilters();render();
- }catch(err){statusEl.textContent="오류: "+(err.message||JSON.stringify(err));}
+  if(!data || !data.length){statusEl.textContent="업로드 데이터가 없습니다."; return;}
+  meta=data[0]; rawRows=Array.isArray(meta.data)?meta.data:[];
+  statusEl.textContent=`최신 데이터 로드 완료\\n파일명: ${meta.file_name}\\n업로드: ${meta.uploaded_at}\\n행 수: ${meta.row_count}`;
+  fillFilters(); render();
+ }catch(e){statusEl.textContent="오류: "+(e.message||JSON.stringify(e));}
 }
+
 function fillFilters(){
- const branches=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.branch))).filter(validFilterValue))].sort();
- const managers=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.manager))).filter(validFilterValue))].sort();
- document.getElementById("branch").innerHTML='<option value="">전체</option>'+branches.map(v=>`<option>${v}</option>`).join("");
- document.getElementById("manager").innerHTML='<option value="">전체</option>'+managers.map(v=>`<option>${v}</option>`).join("");
+ const fill=(id, arr, label)=>{
+  const vals=[...new Set(rawRows.map(r=>norm(pick(r,arr))).filter(valid))].sort();
+  document.getElementById(id).innerHTML=`<option value="">전체 ${label}</option>`+vals.map(v=>`<option>${v}</option>`).join("");
+ };
+ fill("branch",FIELD.branch,"지점");
+ fill("manager",FIELD.manager,"매니저");
+ fill("agency",FIELD.agency,"대리점명");
+ const acts=[...new Set(rawRows.flatMap(r=>splitActs(pick(r,FIELD.activity))).filter(valid))].sort();
+ document.getElementById("activity").innerHTML='<option value="">전체 활동대상</option>'+acts.map(v=>`<option>${v}</option>`).join("");
+ const segs=["미가동","5만미만","5만가동","10만가동","20만가동","30만가동","50만가동"];
+ document.getElementById("runSegment").innerHTML='<option value="">당월가동구간</option>'+segs.map(v=>`<option>${v}</option>`).join("");
 }
-function getFiltered(){
- const b=document.getElementById("branch").value,m=document.getElementById("manager").value,q=document.getElementById("search").value.trim().toLowerCase(),s=document.getElementById("sort").value;
- let rows=rawRows.filter(r=>{const rb=String(pick(r,FIELD_HINT.branch)),rm=String(pick(r,FIELD_HINT.manager)),txt=JSON.stringify(r).toLowerCase();return(!b||rb===b)&&(!m||rm===m)&&(!q||txt.includes(q));});
- if(s){rows.sort((a,b)=>{const av=num(pick(a,FIELD_HINT.amount)),bv=num(pick(b,FIELD_HINT.amount));return s==="amount_desc"?bv-av:av-bv;});}
- return rows;
+
+function filtered(){
+ const b=document.getElementById("branch").value,m=document.getElementById("manager").value,a=document.getElementById("agency").value,act=document.getElementById("activity").value,seg=document.getElementById("runSegment").value,q=document.getElementById("search").value.toLowerCase().trim();
+ return rawRows.filter(r=>{
+  const amt=getAmount(r);
+  const text=[pick(r,FIELD.fc),pick(r,FIELD.code),pick(r,FIELD.agency),pick(r,FIELD.activity)].join(" ").toLowerCase();
+  return (!b||norm(pick(r,FIELD.branch))===b) &&
+         (!m||norm(pick(r,FIELD.manager))===m) &&
+         (!a||norm(pick(r,FIELD.agency))===a) &&
+         (!act||splitActs(pick(r,FIELD.activity)).includes(act)) &&
+         (!seg||segLabel(amt)===seg) &&
+         (!q||text.includes(q));
+ });
 }
+
+function countBy(rows, getter){
+ const map={}; rows.forEach(r=>{const k=norm(getter(r)); if(k) map[k]=(map[k]||0)+getAmount(r);});
+ return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,20);
+}
+function renderRank(id, items){
+ document.getElementById(id).innerHTML=items.map(([k,v],i)=>`<div class="rankItem"><b>${i+1}. ${k}</b><span>${fmt(v)}</span><strong>${fmt(v)}</strong></div>`).join("") || "<div class='rankItem'><b>데이터 없음</b><span></span><strong>0</strong></div>";
+}
+
 function render(){
- const rows=getFiltered();
- document.getElementById("kFile").textContent=meta?meta.file_name:"-";
- document.getElementById("kRows").textContent=fmt(meta?meta.row_count:rawRows.length);
- document.getElementById("kFiltered").textContent=fmt(rows.length);
- document.getElementById("kAmount").textContent=fmt(rows.reduce((sum,r)=>sum+num(pick(r,FIELD_HINT.amount)),0));
- renderTable(rows.slice(0,300));
+ const rows=filtered();
+ document.getElementById("kTotal").textContent=fmt(rows.length);
+ document.getElementById("kFirst").textContent=fmt(rows.filter(r=>norm(pick(r,FIELD.activity)).includes("첫가동")).length);
+ document.getElementById("kGreen").textContent=fmt(rows.filter(r=>norm(pick(r,FIELD.activity)).includes("그린")).length);
+ document.getElementById("kPlat").textContent=fmt(rows.filter(r=>norm(pick(r,FIELD.activity)).includes("플래티넘")).length);
+ document.getElementById("k20").textContent=fmt(rows.filter(r=>getAmount(r)>=190000).length);
+ document.getElementById("kBridge").textContent=fmt(rows.filter(r=>norm(pick(r,FIELD.activity)).includes("브릿지")).length);
+ document.getElementById("rowInfo").textContent=fmt(rows.length)+"명";
+ renderRank("branchRank",countBy(rows,r=>pick(r,FIELD.branch)));
+ renderRank("managerRank",countBy(rows,r=>pick(r,FIELD.manager)));
+ renderTable(rows.slice(0,500));
 }
+
 function renderTable(rows){
- const tbl=document.getElementById("tbl"); if(!rows.length){tbl.innerHTML="";return;}
- const all=Object.keys(rows[0]); const priority=FIELD_HINT.columns; const headers=[...priority.filter(h=>all.includes(h)),...all.filter(h=>!priority.includes(h)).slice(0,20)];
- tbl.innerHTML="<thead><tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+headers.map(h=>`<td>${r[h]??""}</td>`).join("")+"</tr>").join("")+"</tbody>";
+ const headers=["지점","매니저","대리점명","FC명","FC코드","활동대상","당월가동실적","당월가동구간"];
+ document.getElementById("tbl").innerHTML="<thead><tr>"+headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>"+
+ rows.map(r=>{
+  const amt=getAmount(r);
+  const vals=[pick(r,FIELD.branch),pick(r,FIELD.manager),pick(r,FIELD.agency),pick(r,FIELD.fc),pick(r,FIELD.code),pick(r,FIELD.activity),fmt(amt),segLabel(amt)];
+  return "<tr>"+vals.map(v=>`<td>${v??""}</td>`).join("")+"</tr>";
+ }).join("")+"</tbody>";
 }
-function resetFilters(){document.getElementById("branch").value="";document.getElementById("manager").value="";document.getElementById("search").value="";document.getElementById("sort").value="";render();}
-["branch","manager","search","sort"].forEach(id=>document.getElementById(id).addEventListener("input",render));
+
+function resetFilters(){["branch","manager","agency","activity","runSegment"].forEach(id=>document.getElementById(id).value="");document.getElementById("search").value="";render();}
+["branch","manager","agency","activity","runSegment","search"].forEach(id=>document.getElementById(id).addEventListener("input",render));
 loadData();
-</script></body></html>
+</script>
+</body></html>
