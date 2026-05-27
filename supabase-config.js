@@ -3,6 +3,6 @@
 // Project URL 예: https://xxxx.supabase.co
 // anon public key: Supabase > Project Settings > API 에서 확인
 window.BUGYEONG_SUPABASE = {
-  url: "YOUR_SUPABASE_PROJECT_URL",
-  anonKey: "YOUR_SUPABASE_ANON_PUBLIC_KEY"
+  url: "https://mtuorootqzjumpplrmfu.supabase.co",
+  anonKey: "여기에 Publishable key 붙여넣기"
 };
