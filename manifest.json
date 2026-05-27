@@ -1,0 +1,10 @@
+{
+  "name": "부경사업단 업무앱",
+  "short_name": "부경업무앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#0f4c81",
+  "background_color": "#f4f7fb",
+  "description": "부경사업단 가동관리, 대리점관리, 매니저 이미지 업무앱"
+}
