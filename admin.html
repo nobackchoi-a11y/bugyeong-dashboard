@@ -1,9 +1,223 @@
-<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><link rel="stylesheet" href="./assets/style.css"><title>관리자 업로드</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="./supabase-config.js"></script><script src="./assets/admin-auth.js"></script>
-</head><body><header class="header"><div class="brand"><div class="logo">B</div><div><h1>관리자 업로드</h1><div class="sub">엑셀 → Supabase 저장</div></div></div></header><main class="wrap"><section class="card"><label>데이터 종류</label><select id="datasetKey"><option value="fc_activity">가동관리(FC 이미지전송)</option><option value="branch_manager">가동관리(지점/매니저 실적)</option><option value="agency">대리점관리</option></select><label>엑셀 파일</label><input id="fileInput" type="file" accept=".xlsx,.xls,.csv"><label>시트명</label><select id="sheetSelect"><option value="">파일 선택 후 시트 선택</option></select><button class="btn" onclick="uploadExcel()">Supabase에 업로드</button><button class="btn secondary" onclick="previewExcel()">미리보기</button></section><section class="card"><h2>상태</h2><pre id="status" style="white-space:pre-wrap">대기 중</pre></section><section class="card"><h2>미리보기</h2><div class="tablewrap"><table class="table" id="previewTable"></table></div></section><p><a class="btn secondary" href="./index.html">🏠 홈으로</a></p></main><script>
-let workbook=null,parsedRows=[];const statusEl=document.getElementById('status');const cfg=window.BUGYEONG_SUPABASE||{};const supabaseClient=(!cfg.url||cfg.anonKey.includes('여기에'))?null:window.supabase.createClient(cfg.url,cfg.anonKey);
-document.getElementById('fileInput').addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;statusEl.textContent='파일 읽는 중: '+file.name;const buf=await file.arrayBuffer();workbook=XLSX.read(buf,{type:'array'});document.getElementById('sheetSelect').innerHTML=workbook.SheetNames.map(n=>`<option value="${n}">${n}</option>`).join('');statusEl.textContent='시트 선택 후 미리보기 또는 업로드를 누르세요.';});
-function getRows(){if(!workbook)throw new Error('엑셀 파일을 먼저 선택하세요.');const sheetName=document.getElementById('sheetSelect').value||workbook.SheetNames[0];return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{defval:''});}
-function previewExcel(){try{parsedRows=getRows();renderPreview(parsedRows.slice(0,30));statusEl.textContent=`미리보기 완료: ${parsedRows.length.toLocaleString()}행`;}catch(err){statusEl.textContent='오류: '+err.message;}}
-function renderPreview(rows){const t=document.getElementById('previewTable');if(!rows.length){t.innerHTML='';return;}const h=Object.keys(rows[0]);t.innerHTML='<thead><tr>'+h.map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+h.map(x=>`<td>${r[x]??''}</td>`).join('')+'</tr>').join('')+'</tbody>';}
-async function uploadExcel(){try{if(!supabaseClient)throw new Error('supabase-config.js에 Publishable Key를 입력하세요.');const file=document.getElementById('fileInput').files[0];const datasetKey=document.getElementById('datasetKey').value;parsedRows=getRows();statusEl.textContent=`업로드 중... ${parsedRows.length.toLocaleString()}행`;const {error}=await supabaseClient.from('dashboard_datasets').insert({dataset_key:datasetKey,file_name:file?file.name:'',uploaded_by:'admin',row_count:parsedRows.length,data:parsedRows});if(error)throw error;statusEl.textContent=`업로드 완료: ${datasetKey} / ${parsedRows.length.toLocaleString()}행`;}catch(err){statusEl.textContent='오류: '+(err.message||JSON.stringify(err));}}
-</script></body></html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="stylesheet" href="./assets/style.css">
+<script src="./assets/admin-auth.js"></script>
+<title>관리자 업로드</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="./supabase-config.js"></script>
+<style>
+.help{font-size:13px;color:#64748b;line-height:1.6}
+.badge{display:inline-block;background:#eef5fb;color:#0f4c81;border-radius:999px;padding:5px 9px;font-weight:900;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand"><div class="logo">B</div><div><h1>관리자 업로드</h1><div class="sub">엑셀 자동 헤더 감지 · 데이터 정제 · Supabase 저장</div></div></div>
+</header>
+<main class="wrap">
+<section class="card">
+  <h2>업로드 설정</h2>
+  <p class="help">
+    실제 헤더행을 자동으로 찾습니다. 예: 지점/매니저/FC명/대리점명/당월가동실적 등이 있는 행부터 데이터로 저장합니다.
+  </p>
+  <label>데이터 종류</label>
+  <select id="datasetKey">
+    <option value="fc_activity">가동관리(FC 이미지전송)</option>
+    <option value="branch_manager">가동관리(지점/매니저 실적)</option>
+    <option value="agency">대리점관리</option>
+  </select>
+
+  <label>엑셀 파일</label>
+  <input id="fileInput" type="file" accept=".xlsx,.xls,.csv">
+
+  <label>시트명</label>
+  <select id="sheetSelect"><option value="">파일 선택 후 시트 선택</option></select>
+
+  <button class="btn" onclick="previewExcel()">미리보기 / 헤더 감지</button>
+  <button class="btn" onclick="uploadExcel()">Supabase에 업로드</button>
+</section>
+
+<section class="card">
+  <h2>상태</h2>
+  <pre id="status" style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:16px;padding:14px">대기 중</pre>
+</section>
+
+<section class="card">
+  <h2>감지 결과</h2>
+  <div id="detectInfo" class="help">아직 감지 전입니다.</div>
+</section>
+
+<section class="card">
+  <h2>미리보기 <small style="color:#64748b">최대 30행</small></h2>
+  <div class="tablewrap"><table class="table" id="previewTable"></table></div>
+</section>
+
+<p><a class="btn secondary" href="./index.html">🏠 홈으로</a></p>
+</main>
+
+<script>
+let workbook=null;
+let parsedRows=[];
+let detectedHeaderRow=-1;
+let detectedHeaders=[];
+const statusEl=document.getElementById('status');
+const detectInfo=document.getElementById('detectInfo');
+const cfg=window.BUGYEONG_SUPABASE||{};
+const supabaseClient=(!cfg.url || cfg.anonKey.includes('여기에') || cfg.anonKey.includes('YOUR')) ? null : window.supabase.createClient(cfg.url,cfg.anonKey);
+
+const KEYWORDS = {
+  fc_activity: ["지점","매니저","FC명","FC코드","대리점명","당월가동실적","활동대상","가동실적"],
+  branch_manager: ["지점","매니저","FC명","FC코드","대리점명","당월가동실적","누계실적","가동실적"],
+  agency: ["지점","매니저","대리점명","대리점번호","대표자","주소","정리주소","장기","자동차","재물","손보총량"]
+};
+
+document.getElementById('fileInput').addEventListener('change', async (e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  statusEl.textContent='파일 읽는 중: '+file.name;
+  const buf=await file.arrayBuffer();
+  workbook=XLSX.read(buf,{type:'array'});
+  document.getElementById('sheetSelect').innerHTML=workbook.SheetNames.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  statusEl.textContent='시트 선택 후 [미리보기 / 헤더 감지]를 눌러주세요.';
+});
+
+function escapeHtml(v){
+  return String(v ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function norm(v){
+  return String(v ?? "").replace(/\u00a0/g," ").replace(/\s+/g," ").trim();
+}
+function isEmptyRow(arr){
+  return !arr || arr.every(v => norm(v)==="");
+}
+function looksLikeMonthOrNumber(v){
+  const s=norm(v);
+  return /^[-+]?\d+(\.\d+)?$/.test(s) || /^\d{1,2}월$/.test(s) || /^\d{2}\.\d{1,2}$/.test(s);
+}
+function scoreHeaderRow(arr, datasetKey){
+  const keys=KEYWORDS[datasetKey] || [];
+  const cells=arr.map(norm);
+  let score=0;
+  for(const key of keys){
+    if(cells.some(c => c === key || c.includes(key))) score += 2;
+  }
+  const nonEmpty=cells.filter(Boolean).length;
+  if(nonEmpty >= 5) score += 1;
+  // 숫자만 많은 행은 감점
+  const numericLike=cells.filter(looksLikeMonthOrNumber).length;
+  if(numericLike > nonEmpty/2) score -= 5;
+  return score;
+}
+function findHeaderRow(matrix, datasetKey){
+  let best={idx:0,score:-999};
+  const limit=Math.min(matrix.length,80);
+  for(let i=0;i<limit;i++){
+    const row=matrix[i]||[];
+    const sc=scoreHeaderRow(row,datasetKey);
+    if(sc>best.score) best={idx:i,score:sc};
+  }
+  return best.score >= 5 ? best.idx : 0;
+}
+function makeUniqueHeaders(headers){
+  const seen={};
+  return headers.map((h,i)=>{
+    let name=norm(h) || `컬럼${i+1}`;
+    name=name.replace(/\./g,".");
+    if(seen[name]){
+      seen[name]+=1;
+      name=`${name}_${seen[name]}`;
+    }else{
+      seen[name]=1;
+    }
+    return name;
+  });
+}
+function rowToObject(headers, arr){
+  const obj={};
+  headers.forEach((h,i)=> obj[h]=norm(arr[i]));
+  return obj;
+}
+function cleanRows(rows, datasetKey){
+  const must = {
+    fc_activity: ["지점","매니저","FC명","대리점명","당월가동실적"],
+    branch_manager: ["지점","매니저","FC명","대리점명","당월가동실적"],
+    agency: ["지점","매니저","대리점명","대리점번호","정리주소","주소"]
+  }[datasetKey] || [];
+  return rows.filter(r=>{
+    const values=Object.values(r).map(norm);
+    const nonEmpty=values.filter(Boolean).length;
+    if(nonEmpty < 3) return false;
+    // 헤더 반복행 제거
+    const headerLike=Object.keys(r).filter(h => norm(r[h]) === h).length;
+    if(headerLike >= 3) return false;
+    // 필수 후보 중 하나라도 값이 있어야 함
+    const hasCore = must.some(k => Object.keys(r).some(h => h.includes(k) && norm(r[h]) !== ""));
+    // 숫자/월만 있는 줄 제거
+    const numericLike=values.filter(v=>v && looksLikeMonthOrNumber(v)).length;
+    if(numericLike >= nonEmpty-1 && nonEmpty <= 6) return false;
+    return hasCore || nonEmpty >= 6;
+  });
+}
+function getRows(){
+  if(!workbook) throw new Error('엑셀 파일을 먼저 선택하세요.');
+  const datasetKey=document.getElementById('datasetKey').value;
+  const sheetName=document.getElementById('sheetSelect').value || workbook.SheetNames[0];
+  const ws=workbook.Sheets[sheetName];
+  const matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+  const headerIdx=findHeaderRow(matrix,datasetKey);
+  detectedHeaderRow=headerIdx+1;
+  detectedHeaders=makeUniqueHeaders(matrix[headerIdx] || []);
+  const dataRows=matrix.slice(headerIdx+1).filter(r=>!isEmptyRow(r)).map(r=>rowToObject(detectedHeaders,r));
+  return cleanRows(dataRows,datasetKey);
+}
+function previewExcel(){
+  try{
+    parsedRows=getRows();
+    renderPreview(parsedRows.slice(0,30));
+    detectInfo.innerHTML = `
+      <div><span class="badge">감지된 헤더행: ${detectedHeaderRow}행</span>
+      <span class="badge">감지 컬럼: ${detectedHeaders.length}개</span>
+      <span class="badge">저장 대상 행: ${parsedRows.length.toLocaleString()}행</span></div>
+      <div style="margin-top:8px">${detectedHeaders.slice(0,30).map(h=>`<span class="badge">${escapeHtml(h)}</span>`).join("")}</div>
+    `;
+    statusEl.textContent=`미리보기 완료\n감지 헤더행: ${detectedHeaderRow}행\n정제 후 저장 대상: ${parsedRows.length.toLocaleString()}행`;
+  }catch(err){
+    statusEl.textContent='오류: '+err.message;
+  }
+}
+function renderPreview(rows){
+  const t=document.getElementById('previewTable');
+  if(!rows.length){t.innerHTML='';return;}
+  const h=Object.keys(rows[0]);
+  t.innerHTML='<thead><tr>'+h.map(x=>`<th>${escapeHtml(x)}</th>`).join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr>'+h.map(x=>`<td>${escapeHtml(r[x])}</td>`).join('')+'</tr>').join('')+'</tbody>';
+}
+async function uploadExcel(){
+  try{
+    if(!supabaseClient) throw new Error('supabase-config.js에 Publishable Key를 입력하세요.');
+    const file=document.getElementById('fileInput').files[0];
+    if(!file) throw new Error('엑셀 파일을 먼저 선택하세요.');
+    const datasetKey=document.getElementById('datasetKey').value;
+    parsedRows=getRows();
+    if(!parsedRows.length) throw new Error('저장할 데이터가 없습니다. 시트 또는 데이터 종류를 확인하세요.');
+    statusEl.textContent=`업로드 중...\n파일: ${file.name}\n데이터: ${datasetKey}\n행 수: ${parsedRows.length.toLocaleString()}`;
+    const {error}=await supabaseClient.from('dashboard_datasets').insert({
+      dataset_key: datasetKey,
+      file_name: file.name,
+      uploaded_by: 'admin',
+      row_count: parsedRows.length,
+      data: parsedRows
+    });
+    if(error) throw error;
+    statusEl.textContent=`업로드 완료\n파일: ${file.name}\n데이터: ${datasetKey}\n감지 헤더행: ${detectedHeaderRow}행\n저장 행 수: ${parsedRows.length.toLocaleString()}행`;
+  }catch(err){
+    statusEl.textContent='오류: '+(err.message||JSON.stringify(err));
+  }
+}
+</script>
+</body>
+</html>

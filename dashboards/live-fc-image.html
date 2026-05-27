@@ -44,6 +44,17 @@ const statusEl=document.getElementById("status");
 function pick(row,names){for(const n of names){if(row[n]!==undefined&&row[n]!==null&&String(row[n]).trim()!=="")return row[n];}return "";}
 function num(v){if(v===null||v===undefined||v==="")return 0;const n=Number(String(v).replace(/,/g,""));return isNaN(n)?0:n;}
 function fmt(n){return Number(n||0).toLocaleString("ko-KR");}
+function validFilterValue(v){
+  const s=String(v??"").trim();
+  if(!s) return false;
+  if(/^[-+]?\d+(\.\d+)?$/.test(s)) return false;
+  if(/^\d{1,2}월$/.test(s)) return false;
+  if(/^\d{2}\.\d{1,2}$/.test(s)) return false;
+  if(s.length>30) return false;
+  const block=["가동실적","누계실적","브릿지대상","비대상","FC님","드림빅대상","부족분"];
+  if(block.includes(s)) return false;
+  return true;
+}
 async function loadData(){
  try{
   if(!client) throw new Error("supabase-config.js에 Publishable Key를 입력해야 합니다.");
@@ -57,8 +68,8 @@ async function loadData(){
  }catch(err){statusEl.textContent="오류: "+(err.message||JSON.stringify(err));}
 }
 function fillFilters(){
- const branches=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.branch))).filter(Boolean))].sort();
- const managers=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.manager))).filter(Boolean))].sort();
+ const branches=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.branch))).filter(validFilterValue))].sort();
+ const managers=[...new Set(rawRows.map(r=>String(pick(r,FIELD_HINT.manager))).filter(validFilterValue))].sort();
  document.getElementById("branch").innerHTML='<option value="">전체</option>'+branches.map(v=>`<option>${v}</option>`).join("");
  document.getElementById("manager").innerHTML='<option value="">전체</option>'+managers.map(v=>`<option>${v}</option>`).join("");
 }
