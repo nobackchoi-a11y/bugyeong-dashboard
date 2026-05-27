@@ -20,3 +20,7 @@ GitHub + Netlify 자동배포용 구조입니다.
 6. Publish directory: ./
 7. Deploy
 
+
+
+## V2.1
+- 각 대시보드 우측 상단에 홈으로 버튼 추가
