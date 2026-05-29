@@ -1,0 +1,6 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>활동로그 연결 가이드</title><style>body{font-family:'Malgun Gothic',Arial,sans-serif;background:#f3f7fc;color:#0f172a;margin:0}.wrap{max-width:1000px;margin:0 auto;padding:26px 16px}.card{background:#fff;border:1px solid #dbe6f3;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 20px rgba(15,47,95,.06)}pre{background:#111827;color:#e5e7eb;border-radius:12px;padding:16px;overflow:auto}</style></head><body><div class="wrap"><h1>활동로그 연결 가이드</h1><div class="card"><h2>공통 스크립트</h2><pre>&lt;script src="/assets/app-tracker.js"&gt;&lt;/script&gt;</pre></div><div class="card"><h2>FC 행</h2><pre>&lt;tr data-fc-code="44581234" data-fc-name="김철수" data-activity-menu="가전페스타"&gt;...&lt;/tr&gt;</pre></div><div class="card"><h2>대리점 행</h2><pre>&lt;tr data-agency-code="34000098" data-agency-name="케이지에이_새부산"&gt;...&lt;/tr&gt;</pre></div><div class="card"><h2>카톡 공유</h2><pre>bugyeongShareText('김철수 FC님, 가전페스타 대상입니다.', {
+  target_type:'FC',
+  target_code:fcCode,
+  target_name:fcName,
+  activity_menu:'가전페스타'
+});</pre></div></div></body></html>
