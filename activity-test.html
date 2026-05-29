@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>활동로그 테스트</title>
+<style>
+:root{--navy:#0b2d5c;--blue:#2563eb;--green:#16a34a;--bg:#f3f7fc;--line:#dbe6f3;--text:#0f172a;--muted:#64748b}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Malgun Gothic','Noto Sans KR',Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 70px}
+.hero{background:linear-gradient(135deg,#0b2d5c,#1f4f8f 58%,#16a085);color:white;border-radius:0 0 32px 32px;padding:32px 28px;margin-bottom:20px}
+.hero h1{margin:0;font-size:32px}.hero p{margin:10px 0 0;font-weight:800;opacity:.9}
+.card{background:white;border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:16px;box-shadow:0 10px 24px rgba(15,47,95,.08)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+input,select,button{border:1px solid #cfd9e7;border-radius:12px;padding:13px 14px;font-weight:900;font-size:15px}
+button{background:#1f4f8f;color:white;cursor:pointer}
+button.green{background:#15803d}button.orange{background:#c2410c}button.gray{background:#475569}
+label{display:block;font-size:13px;font-weight:900;color:#64748b;margin-bottom:7px}
+.field{margin-bottom:12px}
+.log{white-space:pre-wrap;background:#111827;color:#e5e7eb;border-radius:16px;padding:16px;min-height:160px;line-height:1.6}
+.sample{border:1px dashed #94a3b8;border-radius:18px;padding:18px;margin-top:12px}
+.back{display:inline-block;margin-bottom:14px;text-decoration:none;background:#2563eb;color:white;padding:11px 16px;border-radius:12px;font-weight:900}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="back" href="/index.html">← 홈으로</a>
+<header class="hero">
+<h1>활동로그 테스트</h1>
+<p>로그인 · 화면조회 · FC조회 · 이미지복사 · 카톡공유 이벤트가 app_events에 저장되는지 확인합니다.</p>
+</header>
+
+<section class="card">
+<h2>1. 테스트 사용자</h2>
+<div class="grid">
+<div class="field"><label>사번</label><input id="empNo" value="11501159"></div>
+<div class="field"><label>사용자명</label><input id="userName" value="최현수"></div>
+<div class="field"><label>지점/조직</label><input id="branch" value="사업단"></div>
+</div>
+<button onclick="saveUser()">테스트 사용자 저장</button>
+</section>
+
+<section class="card">
+<h2>2. 대상 정보</h2>
+<div class="grid">
+<div class="field"><label>활동메뉴</label>
+<select id="activityMenu">
+<option>가전페스타</option>
+<option>브릿지(전반)</option>
+<option>브릿지(후반)</option>
+<option>첫가동</option>
+<option>그린플래티넘</option>
+<option>플래티넘</option>
+<option>20만가동</option>
+<option>20만가동근접</option>
+<option>5만가동</option>
+<option>10만가동</option>
+<option>50만지사</option>
+</select></div>
+<div class="field"><label>FC코드</label><input id="fcCode" value="44581234"></div>
+<div class="field"><label>FC명</label><input id="fcName" value="테스트FC"></div>
+</div>
+
+<div class="sample" data-fc-code="44581234" data-fc-name="테스트FC" data-activity-menu="가전페스타">
+<b>테스트 FC 카드</b><br>
+FC코드 44581234 / 테스트FC / 가전페스타
+</div>
+</section>
+
+<section class="card">
+<h2>3. 이벤트 테스트</h2>
+<div class="grid">
+<button onclick="sendLogin()">로그인 기록</button>
+<button onclick="sendPageView()">화면조회 기록</button>
+<button onclick="sendFcView()">FC조회 기록</button>
+<button class="green" onclick="sendImageCopy()">이미지 복사 기록</button>
+<button class="green" onclick="sendImageSave()">이미지 저장 기록</button>
+<button class="orange" onclick="sendKakao()">카톡 공유 기록</button>
+<button class="gray" onclick="openStats()">통계 화면 열기</button>
+<button class="gray" onclick="checkRecent()">최근 로그 확인</button>
+</div>
+</section>
+
+<section class="card">
+<h2>상태</h2>
+<div id="log" class="log">대기 중...</div>
+</section>
+</div>
+
+<script>
+const LOGIN_KEY="bugyeong_app_emp_no";
+function $(id){return document.getElementById(id)}
+function line(t){$("log").textContent += "\n"+t}
+function setLog(t){$("log").textContent=t}
+function user(){
+  return {
+    emp_no:$("empNo").value.trim(),
+    user_name:$("userName").value.trim(),
+    branch:$("branch").value.trim(),
+    role:$("empNo").value.trim()==="11501159"?"admin":"user"
+  }
+}
+function target(){
+  return {
+    activity_menu:$("activityMenu").value,
+    target_type:"FC",
+    target_code:$("fcCode").value.trim(),
+    target_name:$("fcName").value.trim()
+  }
+}
+function saveUser(){
+  localStorage.setItem(LOGIN_KEY,$("empNo").value.trim());
+  setLog("사용자 저장 완료: "+$("empNo").value.trim());
+}
+async function postEvent(payload){
+  const body=Object.assign({},user(),payload);
+  const res=await fetch("/.netlify/functions/log-event",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(!res.ok || !data.ok) throw new Error(data.error||"저장 실패");
+  return data;
+}
+async function sendLogin(){
+  try{await postEvent({event_type:"login",page:"activity_test",target_type:"page",target_name:"활동로그 테스트"});line("로그인 기록 저장 완료");}catch(e){line("오류: "+e.message)}
+}
+async function sendPageView(){
+  try{await postEvent({event_type:"page_view",page:"activity_test",target_type:"page",target_name:"활동로그 테스트"});line("화면조회 기록 저장 완료");}catch(e){line("오류: "+e.message)}
+}
+async function sendFcView(){
+  try{await postEvent(Object.assign({event_type:"fc_view",page:"fc_dashboard"},target()));line("FC조회 기록 저장 완료");}catch(e){line("오류: "+e.message)}
+}
+async function sendImageCopy(){
+  try{await postEvent(Object.assign({event_type:"image_copy",page:"fc_dashboard"},target()));line("이미지 복사 기록 저장 완료");}catch(e){line("오류: "+e.message)}
+}
+async function sendImageSave(){
+  try{await postEvent(Object.assign({event_type:"image_save",page:"fc_dashboard"},target()));line("이미지 저장 기록 저장 완료");}catch(e){line("오류: "+e.message)}
+}
+async function sendKakao(){
+  try{
+    await postEvent(Object.assign({event_type:"kakao_share",page:"fc_dashboard",action_detail:{message:"카톡 공유 테스트"}},target()));
+    line("카톡 공유 기록 저장 완료");
+    if(navigator.share){
+      try{await navigator.share({text:"테스트FC 가전페스타 활동 안내"});}catch(e){}
+    }else{
+      await navigator.clipboard.writeText("테스트FC 가전페스타 활동 안내");
+      line("공유 문구 클립보드 복사 완료");
+    }
+  }catch(e){line("오류: "+e.message)}
+}
+function openStats(){location.href="/dashboards/stats.html"}
+async function checkRecent(){
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const res=await fetch("/.netlify/functions/stats-data?start="+today+"&end="+today+"&t="+Date.now());
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||"조회 실패");
+    setLog("오늘 전체 로그: "+data.total+"건\n\n최근 로그:\n"+(data.recent||[]).slice(0,10).map(r=>`${r.created_at} / ${r.user_name||""} / ${r.event_type} / ${r.target_name||""} / ${r.activity_menu||""}`).join("\n"));
+  }catch(e){line("오류: "+e.message)}
+}
+saveUser();
+</script>
+<script src="/assets/app-tracker.js"></script>
+</body>
+</html>
